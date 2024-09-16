@@ -1,8 +1,11 @@
 const { MongoClient } = require('mongodb');
 
-const uri ="";
-const dbName = "";
-const collectionName = "";
+const uri_DBRead = "";
+const uri_DBUpsert = "";
+const dbName_DBRead = "";
+const dbName_DBUpsert = "";
+const collectionName_DBRead = "";
+const collectionName_DBUpsert = "";
 let client = null;
 
 async function closeConnection() {
@@ -15,7 +18,7 @@ async function closeConnection() {
 
 async function fetchUserDocs(emailBatch) {
     if (!client) {
-        client = new MongoClient(uri);
+        client = new MongoClient(uri_DBRead);
         await client.connect();
         console.log("Connected successfully to MongoDB");
     }
@@ -29,8 +32,8 @@ async function fetchUserDocs(emailBatch) {
     };
     let collection = null;
     try {
-        const database = await client.db(dbName);
-        collection = await database.collection(collectionName);
+        const database = await client.db(dbName_DBRead);
+        collection = await database.collection(collectionName_DBRead);
     } catch (error) {
         console.log("Error connecting to the collection:", error);
         return response;
@@ -82,15 +85,23 @@ async function docCreation(intercomIds, allFoundRecords) {
 }
 
 async function upsertExternalReference(internalIdDocument) {
-    const client = new MongoClient("");
-    try {
+    if (!client) {
+        client = new MongoClient(uri_DBUpsert);
         await client.connect();
-        const externalReferencesCollection = client.db("").collection("");
+        console.log("Connected successfully to MongoDB");
+    }
+    try {
+        const externalReferencesCollection = await client.db(dbName_DBUpsert);
+        collection = await externalReferencesCollection.collection(collectionName_DBUpsert);
+    } catch (error) {
+        console.log("Error connecting to the collection:", error);
+        return response;
+    }
+    try {
         const options = { upsert: true };
-
         return await externalReferencesCollection.insertOne(internalIdDocument, options);
-    } finally {
-        await client.close();
+    } catch{
+        console.log("Error upserting to the collection:", error);
     }
 }
 
